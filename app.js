@@ -277,23 +277,26 @@ function setupNav(viewport) {
 
 // Convert vertical wheel scroll to horizontal movement in the viewport
 function setupWheelScroll(viewport) {
-  viewport.addEventListener(
-    'wheel',
-    (e) => {
-      const absDeltaX = Math.abs(e.deltaX);
-      const absDeltaY = Math.abs(e.deltaY);
-      // If the gesture is predominantly vertical, translate to horizontal
-      if (absDeltaY > absDeltaX) {
-        e.preventDefault();
-        viewport.scrollLeft += e.deltaY;
-      } else if (e.deltaX !== 0) {
-        // Horizontal wheel gestures (e.g., shift+wheel) should also not bubble to page
-        e.preventDefault();
-        viewport.scrollLeft += e.deltaX;
-      }
-    },
-    { passive: false }
-  );
+  const shell = viewport?.parentElement;
+  const normalizeDelta = (e) => {
+    const factor = e.deltaMode === 1 ? 24 : 1; // Firefox line mode -> px
+    return { x: e.deltaX * factor, y: e.deltaY * factor };
+  };
+  const handleWheel = (e) => {
+    const { x, y } = normalizeDelta(e);
+    const absX = Math.abs(x);
+    const absY = Math.abs(y);
+    // Translate predominant vertical wheel to horizontal scroll
+    if (absY > absX) {
+      e.preventDefault();
+      viewport.scrollLeft += y;
+    } else if (x !== 0) {
+      e.preventDefault();
+      viewport.scrollLeft += x;
+    }
+  };
+  viewport.addEventListener('wheel', handleWheel, { passive: false });
+  if (shell) shell.addEventListener('wheel', handleWheel, { passive: false });
 }
 
 // Helpers to compute visible slides and active index
