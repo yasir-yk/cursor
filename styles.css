@@ -197,6 +197,40 @@ body {
 .rt { grid-column: 3; grid-row: 1; }
 .rb { grid-column: 3; grid-row: 2; }
 
+/* Masonry layout */
+.masonry {
+  position: relative;
+}
+
+/* 4 columns on desktop by default */
+.masonry-sizer,
+.masonry-item {
+  width: 25%;
+}
+
+/* vertical spacing between rows (Masonry handles horizontal via gutter option) */
+.masonry-item { 
+  position: relative; 
+  overflow: hidden; 
+  border-radius: var(--radius); 
+  margin-bottom: 16px; 
+  background: #0e0f11; 
+}
+.masonry-item img { 
+  display: block; 
+  width: 100%; 
+  height: auto; 
+}
+
+@media (max-width: 1100px) {
+  /* 3 columns */
+  .masonry-sizer, .masonry-item { width: 33.3333%; }
+}
+@media (max-width: 700px) {
+  /* 2 columns */
+  .masonry-sizer, .masonry-item { width: 50%; }
+}
+
 .nav-btn {
   position: absolute;
   top: 50%;
