@@ -9,6 +9,7 @@ const CATEGORIES = [
 ];
 
 const SLIDE_COUNT = 12; // total slides generated
+const ITEMS_PER_SLIDE = 12; // Masonry items per slide
 
 function buildImgUrl(theme, seed, w = 1000, h = 800) {
   // Using Unsplash random source by theme; seed busts cache to keep images distinct
@@ -24,9 +25,11 @@ function localImagePath(seed) {
   return `./images/img-${index}.jpg`;
 }
 
-function setImageSource(img, theme, seed) {
+function setImageSource(img, theme, seed, opts = {}) {
+  const width = typeof opts.width === 'number' ? opts.width : undefined;
+  const height = typeof opts.height === 'number' ? opts.height : undefined;
   let usedFallback = false;
-  const fallback = buildImgUrl(theme, seed);
+  const fallback = buildImgUrl(theme, seed, width, height);
   const local = localImagePath(seed);
   // Try local first
   img.src = local;
@@ -47,6 +50,9 @@ function pickRandomThemes(max = 2) {
   const count = Math.random() > 0.5 ? 2 : 1;
   return shuffled.slice(0, Math.min(max, count)).map(x => x.id);
 }
+
+// Keep a map of Masonry instances per container so we can relayout on resize
+const masonryInstances = new WeakMap();
 
 function createSlideElement(slideIndex, tags) {
   const seedBase = slideIndex * 1000 + 100; // ensure different images per slide
@@ -73,23 +79,47 @@ function createSlideElement(slideIndex, tags) {
   header.appendChild(title);
   header.appendChild(tagsWrap);
 
-  const collage = document.createElement('div');
-  collage.className = 'collage';
+  // Masonry container
+  const masonry = document.createElement('div');
+  masonry.className = 'masonry';
 
-  const imgClasses = ['lt', 'lb', 'center', 'rt', 'rb'];
-  imgClasses.forEach((cls, i) => {
-    const box = document.createElement('div');
-    box.className = `box ${cls}`;
+  // column width sizer for Masonry (percentage-based)
+  const sizer = document.createElement('div');
+  sizer.className = 'masonry-sizer';
+  masonry.appendChild(sizer);
+
+  // Create many masonry items with varying heights
+  const heights = [220, 260, 300, 340, 380, 420];
+  for (let i = 0; i < ITEMS_PER_SLIDE; i++) {
+    const item = document.createElement('div');
+    item.className = 'masonry-item';
     const img = document.createElement('img');
     img.alt = `${themeForImage(i)} photo`;
     img.loading = 'lazy';
-    setImageSource(img, themeForImage(i), seedBase + i);
-    box.appendChild(img);
-    collage.appendChild(box);
-  });
+    // Vary image intrinsic size for masonry effect
+    const h = heights[i % heights.length];
+    setImageSource(img, themeForImage(i), seedBase + i, { width: 600, height: h });
+    item.appendChild(img);
+    masonry.appendChild(item);
+  }
 
   slide.appendChild(header);
-  slide.appendChild(collage);
+  slide.appendChild(masonry);
+
+  // Initialize Masonry once images are loaded
+  if (typeof imagesLoaded !== 'undefined' && typeof Masonry !== 'undefined') {
+    imagesLoaded(masonry, () => {
+      const instance = new Masonry(masonry, {
+        itemSelector: '.masonry-item',
+        columnWidth: '.masonry-sizer',
+        percentPosition: true,
+        gutter: 16,
+        horizontalOrder: true,
+      });
+      masonryInstances.set(masonry, instance);
+    });
+  }
+
   return slide;
 }
 
@@ -324,6 +354,23 @@ function setupProgress(viewport) {
   };
   viewport.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
+  // Relayout Masonry on resize
+  window.addEventListener('resize', () => {
+    masonryInstances.forEach?.(() => {}); // placeholder for TS-like checks
+    // Iterate known instances and relayout
+    try {
+      masonryInstances && masonryInstances instanceof WeakMap;
+      // We cannot iterate WeakMap; instead query DOM for current masonry containers
+      document.querySelectorAll('.masonry').forEach((el) => {
+        const inst = masonryInstances.get(el);
+        if (inst && typeof inst.layout === 'function') {
+          inst.layout();
+        }
+      });
+    } catch (e) {
+      // no-op
+    }
+  });
   // Initialize
   updateProgress(viewport);
 }
