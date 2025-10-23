@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Horizontal Gallery with Filters</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <h1 class="title">Explore Gallery</h1>
+      <p class="subtitle">Horizontal slider with filterable collage slides</p>
+    </header>
+
+    <section class="filters" aria-label="Filters">
+      <div class="chips" id="filterChips"></div>
+    </section>
+
+    <main class="slider-section">
+      <div class="slider-shell">
+        <button class="nav-btn prev" id="btnPrev" aria-label="Previous slide">&#10094;</button>
+        <div class="slider-viewport" id="sliderViewport" tabindex="0" aria-roledescription="carousel" aria-label="Image gallery" aria-live="polite"></div>
+        <button class="nav-btn next" id="btnNext" aria-label="Next slide">&#10095;</button>
+      </div>
+      <div class="empty-state" id="emptyState" hidden>
+        <p>No slides match the selected filters.</p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <small>Built for demo • Drag, wheel or use arrows</small>
+    </footer>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
