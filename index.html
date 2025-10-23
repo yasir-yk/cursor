@@ -15,6 +15,19 @@
       <p class="subtitle">Horizontal slider with filterable collage slides</p>
     </header>
 
+    <div class="progress-hud" aria-hidden="true">
+      <div class="progress-line">
+        <div class="progress-track">
+          <div class="progress-bar" id="scrollProgressBar"></div>
+        </div>
+        <div class="counter" aria-label="Slide counter">
+          <span id="currentSlide">1</span>
+          <span class="sep">/</span>
+          <span id="totalSlides">0</span>
+        </div>
+      </div>
+    </div>
+
     <section class="filters" aria-label="Filters">
       <div class="chips" id="filterChips"></div>
     </section>
