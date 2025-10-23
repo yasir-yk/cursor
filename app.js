@@ -16,6 +16,32 @@ function buildImgUrl(theme, seed, w = 1000, h = 800) {
   return `https://source.unsplash.com/${w}x${h}/?${q}&sig=${seed}`;
 }
 
+// Prefer local images if present; fall back to remote Unsplash
+function localImagePath(seed) {
+  // Name your files as: ./images/img-1.jpg, img-2.jpg, ...
+  // This cycles deterministically based on seed to spread choices.
+  const index = (seed % 20) + 1; // supports img-1.jpg .. img-20.jpg
+  return `./images/img-${index}.jpg`;
+}
+
+function setImageSource(img, theme, seed) {
+  let usedFallback = false;
+  const fallback = buildImgUrl(theme, seed);
+  const local = localImagePath(seed);
+  // Try local first
+  img.src = local;
+  img.addEventListener(
+    'error',
+    function handleError() {
+      if (usedFallback) return;
+      usedFallback = true;
+      img.removeEventListener('error', handleError);
+      img.src = fallback;
+    },
+    { once: true }
+  );
+}
+
 function pickRandomThemes(max = 2) {
   const shuffled = [...CATEGORIES].sort(() => Math.random() - 0.5);
   const count = Math.random() > 0.5 ? 2 : 1;
@@ -57,7 +83,7 @@ function createSlideElement(slideIndex, tags) {
     const img = document.createElement('img');
     img.alt = `${themeForImage(i)} photo`;
     img.loading = 'lazy';
-    img.src = buildImgUrl(themeForImage(i), seedBase + i);
+    setImageSource(img, themeForImage(i), seedBase + i);
     box.appendChild(img);
     collage.appendChild(box);
   });
