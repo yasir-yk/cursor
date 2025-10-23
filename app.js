@@ -130,6 +130,8 @@ function applyFilters(viewport, selectedTags) {
   if (selectedTags.size === 0) {
     slides.forEach(s => (s.hidden = false));
     emptyState.hidden = slides.length !== 0;
+    // Update progress/count after filter changes
+    updateProgress(viewport);
     return;
   }
 
@@ -141,6 +143,7 @@ function applyFilters(viewport, selectedTags) {
     if (show) visibleCount++;
   });
   emptyState.hidden = visibleCount !== 0;
+  updateProgress(viewport);
 }
 
 function setupFilterInteractions(viewport) {
@@ -242,6 +245,89 @@ function setupNav(viewport) {
   }, { passive: true });
 }
 
+// Convert vertical wheel scroll to horizontal movement in the viewport
+function setupWheelScroll(viewport) {
+  viewport.addEventListener(
+    'wheel',
+    (e) => {
+      const absDeltaX = Math.abs(e.deltaX);
+      const absDeltaY = Math.abs(e.deltaY);
+      // If the gesture is predominantly vertical, translate to horizontal
+      if (absDeltaY > absDeltaX) {
+        e.preventDefault();
+        viewport.scrollLeft += e.deltaY;
+      } else if (e.deltaX !== 0) {
+        // Horizontal wheel gestures (e.g., shift+wheel) should also not bubble to page
+        e.preventDefault();
+        viewport.scrollLeft += e.deltaX;
+      }
+    },
+    { passive: false }
+  );
+}
+
+// Helpers to compute visible slides and active index
+function getVisibleSlides(viewport) {
+  return [...viewport.querySelectorAll('.slide')].filter(s => !s.hidden);
+}
+
+function findClosestVisibleIndex(viewport) {
+  const slides = getVisibleSlides(viewport);
+  if (slides.length === 0) return -1;
+  const viewportRect = viewport.getBoundingClientRect();
+  const centerX = viewport.scrollLeft + viewportRect.width / 2;
+  let closestIdx = 0;
+  let minDist = Infinity;
+  slides.forEach((s, idx) => {
+    const rect = s.getBoundingClientRect();
+    const slideCenter = viewport.scrollLeft + (rect.left - viewportRect.left) + rect.width / 2;
+    const d = Math.abs(slideCenter - centerX);
+    if (d < minDist) { minDist = d; closestIdx = idx; }
+  });
+  return closestIdx;
+}
+
+// Update progress bar width, counter text, and active slide highlight
+function updateProgress(viewport) {
+  const progressBar = document.getElementById('scrollProgressBar');
+  const currentEl = document.getElementById('currentSlide');
+  const totalEl = document.getElementById('totalSlides');
+  if (!progressBar || !currentEl || !totalEl) return;
+
+  const slides = getVisibleSlides(viewport);
+  const totalVisible = slides.length;
+  totalEl.textContent = String(totalVisible);
+
+  // Progress along scrollable width
+  const maxScrollable = Math.max(1, viewport.scrollWidth - viewport.clientWidth);
+  const ratio = Math.max(0, Math.min(1, viewport.scrollLeft / maxScrollable));
+  progressBar.style.width = `${ratio * 100}%`;
+
+  // Active index and highlighting
+  slides.forEach(s => s.classList.remove('is-active'));
+  const activeIdx = findClosestVisibleIndex(viewport);
+  const currentIndexHuman = activeIdx === -1 ? 0 : activeIdx + 1;
+  currentEl.textContent = String(currentIndexHuman);
+  if (activeIdx >= 0) {
+    slides[activeIdx].classList.add('is-active');
+  }
+}
+
+function setupProgress(viewport) {
+  let rafId = 0;
+  const onScroll = () => {
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      updateProgress(viewport);
+    });
+  };
+  viewport.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+  // Initialize
+  updateProgress(viewport);
+}
+
 function main() {
   const viewport = document.getElementById('sliderViewport');
   const chips = document.getElementById('filterChips');
@@ -249,6 +335,8 @@ function main() {
   buildSlides(viewport);
   setupFilterInteractions(viewport);
   setupNav(viewport);
+  setupWheelScroll(viewport);
+  setupProgress(viewport);
 }
 
 window.addEventListener('DOMContentLoaded', main);

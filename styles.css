@@ -25,6 +25,48 @@ body {
   background: radial-gradient(1200px 800px at 70% -10%, #1a1c20 0%, #0b0b0b 50%), var(--bg);
 }
 
+/* Progress HUD */
+.progress-hud {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 10px clamp(16px, 5vw, 48px) 6px;
+  background: linear-gradient(180deg, rgba(11,11,11,0.9), rgba(11,11,11,0.6) 60%, rgba(11,11,11,0));
+  backdrop-filter: blur(4px);
+}
+
+.progress-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.progress-track {
+  position: relative;
+  flex: 1 1 auto;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: linear-gradient(90deg, #2b7bff, #7a5cff);
+  border-radius: 999px;
+}
+
+.counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.counter .sep { color: var(--muted); font-weight: 600; }
+
 .site-header {
   padding: 32px clamp(16px, 5vw, 48px) 8px;
 }
@@ -103,6 +145,11 @@ body {
   border-radius: calc(var(--radius) + 6px);
   box-shadow: var(--shadow);
   padding: clamp(12px, 2.2vw, 22px);
+}
+
+.slide.is-active {
+  outline: 2px solid rgba(123, 156, 255, 0.6);
+  outline-offset: 0px;
 }
 
 .slide-header {
